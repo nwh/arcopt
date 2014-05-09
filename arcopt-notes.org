@@ -1,0 +1,161 @@
+* <2011-08-09 Tue> note on shifting the reduced Hessian
+
+The modified newton step is currently computed by solving the system:
+
+\[
+(Z^T H Z + \delta I) p = -Z^T g
+\]
+
+The linear system that defines the arc is currently:
+
+\[
+\dot w(t) = -Z^T H Z w(t) - Z^T g
+\]
+
+In order to make the initial trial point for modified newton and the arc the
+same, the arc should be defined as
+
+\[
+\dot w(t) = -(Z^T H Z + \delta I)w(t) - Z^T g
+\]
+
+The relevant methods are:
+- comp_arc
+- comp_pcg
+
+* <2011-08-09 Tue> note on expand reset procedure
+
+The code currently has an expand reset procedure.  However, phase 2 does not
+currently call phase 1 if an expand reset results in an infeasible point.
+
+This will have to be fixed.
+
+* <2011-08-10 Wed> note on second derivative of the arc
+
+The arc is:
+
+w'(t) = Aw(t) + b
+w(0) = 0
+
+The second derivative of the arc is:
+
+w''(t) = Aw'(t)
+
+Thus evaluated at t=0 we have
+
+w''(0) = Aw'(0) = Ab
+
+That is fairly easy to compute, however arc search is performed over an
+interpolant.  Thus, the code constructs the first and second derivatives of the
+interpolant.  It only uses the second derivative to compute w''(0).
+
+It stores the value in intp_d2val.
+
+The relevant method is: comp_intp
+
+* <2011-08-12 Fri> bug with optimality conditions
+
+For the CUTEr problem:
+
+  TFI3 M 50
+
+agfs returns a point that opt_cond does not think optimal.
+
+It terminates at iteration 13.  I am still trying to figure this out.
+
+This problem was fixed on <2011-08-13 Sat>.  The bug was in opt_cond.m.  agfs.m
+code was correct.  opt_cond was computing z (residual gradient vector)
+incorrectly.
+
+* <2011-10-25 Tue> mgf_lc.m commit note 1
+
+Things changed:
+- added evalflg property, which will be true if negative eigenvalue is present
+- phase2_price will not change basis if negative eigenvalue is present
+  (a constraint is not deleted if negative curvature is present)
+- comp_dnc was split into comp_eigs and comp_dnc
+- comp_eigs works does nothing if there are no superbasics
+- comp_dnc sets the correct direction for the dnc
+- rearranged method calls in phase2 loop
+  - comp_hess and comp_eigs now come before the termination check
+  - comp_dnc comes right after comp_rg
+  - these methods are evaluated before the degeneracy check
+
+* <2011-10-25 Tue> mgf_lc.m commit note 2
+
+arranged code to check for degeneracy after dnc modification
+
+now phase2_priice will not delete a constraint if dnc modification is applied
+
+changes:
+- added properties:
+  - rdx
+  - dnccnt
+  - dncmflg
+  - dncmcnt
+- removed properties
+  - arcmflg
+  - arcmcnt
+- changed option arc_mtol to dnc_mtol
+- print count of dnc and dnc mod iterations
+- comp_dnc: added dnc counter
+- phase2_dx now does the dnc mod if needed
+- comp_arc: no longer does dnc mod
+
+* <2011-10-26 Wed> mgf_lc.m commit message
+
+moved phase 2 termination checks to method
+
+- added termination check on min eigenvalue of hessian (ctol)
+- changed phase 2 termination codes to 1,2,3
+- moved all phase 2 termination checks to separate method
+
+going to work on phase 1 later
+
+* <2012-02-18 Sat> changes
+
+- added cycle guard in phase 2 price method
+- changed default arc_vtol to 1e-7
+- changed comp_eigs to report negative eigenvalue if it is less than -ctol
+- in phase2_dx, the modification vector is scaled by |eval|
+
+* <2012-02-18 Sat> work with biggs6
+
+BIGGS6 was giving arcopt some trouble.  Here are some notes:
+
+** biggs6 is a nasty problem, solving to a large tolerance is not easy
+
+** the solution is very senstive to the starting point
+
+** selection of initial step size
+
+One of the main problems arcopt was having related to the selection of the
+initial step size.  At a certain point, there would be a small eigenvalue in
+the arc-matrix, this would fail a tolerance check, and lead the initial step
+size selection to be 1.0, which caused very small, but acceptable steps.  I
+changed the tolerance to allow the normal step size selection with smaller
+eigenvalues.
+
+* Tasks
+
+** DONE degeneracy check when arc is modified
+** DONE arc modification counter
+** DONE check what happens when there are 2 super basics and negative curvature
+** DONE check sign of dnc to make sure it is a non-ascent direction
+** DONE organize phase2 termination conditions in separate method
+** DONE check second derivative for termination
+** TODO put phase 1 termination conditions into separate function
+** TODO handle linear objective in phase 2, or zero'd Hessian
+** TODO adaptive initial step size selection
+** TODO adaptive step domain selection
+** TODO expose lusol options to user
+** TODO replace direct calls to bfac, this should all be with a fac_ method
+** TODO document method for selection column from S to move to B
+** TODO reuse the same arc object
+** TODO fix phase 2 selection of constraint to delete
+currently, it is the same as phase1, there should be code here to not delete a
+constraint under certain circumstances
+** TODO apply technique for better conditioned nullspace
+** TODO organize exit codes
+** TODO improve performance in constraint intersection testing
+** TODO fix use of inf as max bounds, use +/- 1e20

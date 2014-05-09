@@ -1,0 +1,273 @@
+\documentclass[11pt]{article}
+
+\input{/home/nwh/Dropbox/templates/nwh-style.sty}
+
+\title{Arcopt algorithm summary}
+\author{Nick Henderson}
+%\date{}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+\maketitle
+
+This document describes the details of the ARCOPT algorithm as implemented in
+\code{arcopt\_nm\_lc.m}.  The three major processes are
+
+\begin{enumerate}
+\item Initialization
+\item Phase 1: find feasible point
+\item Phase 2: find optimal point
+\end{enumerate}
+
+\section{Initialization}
+
+The initialization phase is responsible for
+
+\begin{itemize}
+\item processing solver options
+\item dealing with input data
+\item selecting an intial basis
+\item performing the initial factorization
+\end{itemize}
+
+\subsection{Input}
+
+The algorithm requires
+
+\begin{itemize}
+\item $[f\ g] \leftarrow F(x)$, a routine to evaluate the objective function
+  and gradient
+\item $H(x)$, a routine to evaluate the Hessian matrix
+\item $x_0$, an initial guess, vector of length $n$
+\item $b_l, b_u$, lower and upper bounds on variable $x$
+\item $A_0$, constraint matrix, size $m\times n$
+\item $c_l, c_u$, lower and upper bounts on $A_0x$
+\item an optional structure with solver options
+\end{itemize}
+
+\subsection{Input processing}
+
+The input data is processed in the following manner:
+\begin{enumerate}
+\item Compute initial slack variables \[ s_0 = A_0 x_0 \]
+\item Form augmented constraint matric \[ A = [A_0\ -I] \]
+\item Form augmented bounds
+\begin{align*}
+l = \begin{pmatrix} b_l \\ c_l \end{pmatrix},\
+u = \begin{pmatrix} b_u \\ c_u \end{pmatrix}
+\end{align*}
+\item Initialize variable vector $x$ by projecting into bounds
+\begin{align*}
+x &= \begin{pmatrix}x_0 \\ s_0 \end{pmatrix} \\
+x &= \max(x,l) \\
+x &= \min(x,u)
+\end{align*}
+\end{enumerate}
+
+The remaining code treats all variables equivalently, except in basis repair
+where slack columns may be used to repair the factorization.  The optimization
+problem is now
+
+\begin{equation*}\label{eq:LC2}
+\begin{array}{cl}
+\underset{x\in \reals^n}{\mbox{minimize}} & F(x) \\
+\mbox{subject to} & Ax = 0 \\
+ & l \le x \le u
+\end{array}
+\end{equation*}
+
+\subsection{Basis initialization (CRASH)}
+
+ARCOPT keeps an array which indicates the state of each variable.  The possible
+states are
+\begin{itemize}
+\item basic: column corresponding to variable is in basis
+\item super-basic: variable is free
+\item non-basic at lower bound: variable is fixed at lower bound
+\item non-basic at upper bound: variable is fixed at upper bound
+\item fixed: variable $i$ is fixed if $l_i = u_i$
+\end{itemize}
+
+The procedure to initialize the basis follows
+\begin{enumerate}
+\item All variables are set as super-basic
+\item Variables at lower bound are made non-basic
+\item Variables at upper bound are made non-basic
+\item Variables whose bounds are equal are made fixed
+\end{enumerate}
+
+ARCOPT currently has two options for selecting the initial basis
+\begin{itemize}
+\item If \code{opt.crash == 'firstm'}, variables $1:m$ are selected for the
+  basis.  This selects the first $m$ columns of $A$ for the initial basis.
+\item If \code{opt.crash == 'slack'}, variables $n+1:m+n$ (slack variables) are
+  selected for the basis.  In this case, the initial basis matrix is $-I$.
+\end{itemize}
+
+\subsection{Initial factorization}
+
+ARCOPT performs an initial factorization of the basis.  If the basis is found
+to be rank deficient, basis repair is called, which will change the set of
+basis variables.
+
+\section{Phase 1}
+
+Each iteration of Phase 1 carries out the following steps
+\begin{enumerate}
+\item Call EXPAND subroutine to update feasibility tolerance
+\item Checks the feasibility of the basic variables.  If they are found to be
+  feasible, phase 1 is complete and will terminate.  If they are not feasible,
+  phase 1 continues
+\item Construct a linear objective vector to minimize the sum of
+  infeasibilities
+  \begin{itemize}
+    \item $c(i) = 0$ if $x(i)$ is feasible
+    \item $c(i) = 1$ if $x(i) > u(i)$
+    \item $c(i) = -1$ if $x(i) < l(i)$
+  \end{itemize}
+\item Compute vector of multipliers by solving $By=c$
+\item Compute residual gradient vector $z = c - A\T y$
+\item Phase 1 optimality check.  Phase 1 is optimal if
+\begin{equation*}
+\min(x-l,z) \le \delta_D \text{ and } \min(u-x,-z) \le \delta_D.
+\end{equation*}
+If this occurs, the problem is not feasible.  Here $\delta_D$ is the dual
+optimality tolerance, known as \code{dtol} in the code.
+\item \code{phase1\_price}: simply choose non-basic variable corresponding to element
+  of $z$ with largest magnitude and appropriate sign.  The index of this
+  variable is denoted $s$.
+\item \code{phase1\_dx}: compute phase 1 search direction.
+\item \code{phase1\_stp}: compute phase 1 step size.  It computes the step size
+  the removes as many infeasibilities as possible, but does not go any further.
+\item Basis update:  Calls \code{basis\_main} to update factorization and
+  change variable state if needed.
+\end{enumerate}
+
+\section{Phase 2}
+
+Each phase 2 iteration carries out the following steps:
+
+\begin{description}
+\item \code{exp\_main}: call EXPAND to update feasibility tolerances.
+\item \code{comp\_y}: compute vector of multipliers by solving $By=c$.
+\item \code{comp\_z}: compute residual gradient vector $z = c - A\T y$.
+\item \code{comp\_hess}: evaluates the user supplied Hessian function.
+\item \code{comp\_eigs}: this method uses Matlab's \code{eigs} function to
+  compute the eigenvector ($d_1$) corresponding to the smallest eigenvalue
+  ($\lambda_{\min}$).  This is used as the direction of negative curvature for
+  other parts of the algorithm.  If there is a negative eigenvalue, then dnc is
+  set to the the eigenvector corresponding to the smallest eigenvalue.  If all
+  eigenvalues (according to \code{eigs}) are non-negative, then $d_1 = 0$.
+\item \code{phase2\_term}: checks phase 2 termination conditions. Phase 1 is optimal if
+\begin{equation*}
+\min(x-l,z) \le \delta_D \text{ and } \min(u-x,-z) \le \delta_D \text{ and }
+\lambda_{\min} \le \delta_C
+\end{equation*}
+\item \code{phase2\_price}: chooses a non-basic variable to make super-basic.
+  Does nothing if negative curvature is present.
+\item \code{comp\_rg}: Computes the reduced gradient
+\begin{equation*}
+rg = Z\T g.
+\end{equation*}
+\item \code{comp\_dnc}: chooses direction of negative curvature $d_2$ from $\pm
+  d_1$ such that $d_2$ is a descent direction, $rg\T d_2 < 0$.
+\item \code{phase2\_dx}: Computes steepest descent direction in full space
+  $\Delta x = -Zrg$.  If required, perturbes the direction by dnc, $\Delta x =
+  -Z(rg+d_2$).
+\item \code{comp\_dx\_stpmax}: Find largest step size possible along $\Delta
+  x$.  This routine will indiciate primal degeneracy.
+\item Degeneracy check: If \code{comp\_dx\_stpmax} indicated degeneracy, take
+  the step and move to next iteration.
+\item \code{comp\_lin}: compute Newton's search direction with regularization term:
+\begin{equation*}
+(Z\THZ + \delta_LI)p = -rg
+\end{equation*}
+\item \code{comp\_arc}: this method constructs the arc object.  The first
+  question is the size of the subspace.  If a direction of negative curvature
+  exists, then the arc subspace is chosen to be $[rg\ p\ d_2]$, where $rg$ is
+  the reduced gradient, $p$ is the modified newton direction, and $d_2$ is
+  direction of negative curvature.  If no direction of negative curvature
+  exists, the subspace is chosen to be $[rg\ p]$.
+
+  The right hand side of the arc must be perturbed under a condition in order
+  to prove convergence to a point satisfying the second order optimality
+  conditions.  The condition is
+
+  \begin{equation*}
+    |g\T H d| \le \delta_M|d\T H d|.
+  \end{equation*}
+
+\item \code{comp\_stpinit}: constructs the initial step size for the
+  $s$-parameterization of the arc. If the Hessian is positive definite, the
+  initial step size is $s_0 = 1/\min(\lambda(H))$.  If the Hessian is positive
+  semi-definite, the initial step size is $s_0 = 1$.  If the Hessian is
+  indefinite, the initial step size is $s_0 = -1/\min(\lambda(H))$.  This
+  choice was used in both [Behrman1998] and [Gatto2000].
+
+\item \code{comp\_arc\_stpmax}: compute maximum step size along the arc.
+\item \code{comp\_srch\_d2val}: compute the \code{srch\_d2val} parameter, which
+  is need for the arc search.  Let's say the objective function is $f(x)$ and
+  the search arc is $w(s)$.  The search function is $\phi(s) = f(x +
+  w(s))$. The initial values of the first and second derivatives are:
+  \begin{align*}
+    \phi'(0) &= g\T w'(0) \\
+    \phi''(0) &= w'(0)\T H w'(0) + g\Tw''(0)
+  \end{align*}
+  This method computes $\phi''(0)$ and stores it in \code{srch\_d2val}.
+\item \code{phase2\_srch}: carry out arcsearch routine to find satisfactory
+  step size.
+\item \code{basis\_main}: call basis update routines.
+\end{description}
+
+\section{Basis updates}
+
+The basis package has three routines:
+\begin{itemize}
+\item \code{basis\_main}: entry point to basis update for both phase 1 and phase 2.
+\item \code{basis\_activate}: changes program state to make limiting variable
+  non-basic.  The index of the limiting variable is denoted with $r$.
+\item \code{basis\_update}: This method is called when a basic variable reaches
+  a bound.  The basis factorization must be updated so that: (1) the column
+  corresponding to the limiting variable is removed (2) a new column
+  corresponding to a superbasic variable is added If the update leads to a
+  singular basis, the factorization repair procedure is envoked by calling
+  \code{fac\_main}.
+
+\end{itemize}
+
+\section{Factorization}
+
+The factorization packages has several routines:
+\begin{itemize}
+\item \code{fac\_init}: allocates storage for factorization.  Only called once
+  during the initialization phase.
+\item \code{fac\_main}: main controller for the basis factorization.
+  It first attempts to factorize with \code{fac\_B}.  If basis is found to be
+  rank deficient, then attempts to fix basis by swaping with super-basic
+  variables with \code{fac\_BS}.  If basis is still rank deficient, will call
+  \code{fac\_BR} to replace dependent columns with appropriate ones
+  corresponding to slack variables.
+\item \code{fac\_B}: factorize the basis matrix with LUSOL's threshold partial
+  pivoting (TPP).
+\item \code{fac\_BS}: factorize $[B\ S]\T$ with LUSOL's threshold rook pivoting
+  (TRP) in order to find a full rank or better conditioned set of basis columns
+  without changing the state of non-basic variables.  The $LU$ factors are not
+  stored and a subsequent call to \code{fac\_B} is required for the algorithm to
+  continue.
+\item \code{fac\_BR}: The BR factorization uses LUSOL's threshold rook pivoting
+  (TRP) option to find dependent columns.  Dependent columns are replaced with
+  identity columns corresponding to slack variables in the \code{fac\_repair}
+  method.  There is no guarantee that one factorization and subsequent call to
+  \code{fac\_repair} will produce a nonsingular basis.  Thus, this method will
+  repeat until a full rank basis is produced.  This is always possible.  Just
+  imagine the case where the entire basis matrix was replaced with the
+  identity.  For efficiency the method throws the $LU$ factors away.  A
+  subsequent factorization is needed for solves.
+\item \code{fac\_repair}: factorization repair, adapted from s2sing in SNOPT.
+  This method carries out factorization or basis repair by making: (1)
+  variables corresponding to dependent columns nonbasic (2) appropriate slack
+  variables basic.
+\end{itemize}
+
+\end{document}

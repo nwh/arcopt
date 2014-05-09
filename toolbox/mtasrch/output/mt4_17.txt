@@ -1,0 +1,2 @@
+nfev b          stx          sty          stp           fp           dp|case
+   1 0            0            0          0.1     0.999006 -4.93296e-05|  t1

@@ -1,0 +1,38 @@
+* Arcopt options summary
+
+#+ATTR_LaTeX: align=|l|l|l|
+|------------------------+---------------------+-------------------------------------|
+| Parameter              | default             | note                                |
+|------------------------+---------------------+-------------------------------------|
+| \texttt{arc\_vtol}     | \texttt{1.0e-04}    | Tolerance for initial step          |
+| \texttt{crash}         | \texttt{'slack'}    | Procedure for initial basis         |
+| \texttt{ctol}          | \texttt{1.0e-04}    | Negative curvature tolerance        |
+| \texttt{dnc\_mtol}     | \texttt{0.2}        | DNC modification tolerance          |
+| \texttt{dtol}          | \texttt{1.0e-06}    | Dual tolerance                      |
+| \texttt{eigs\_disp}    | \texttt{0}          | \texttt{eigs} display option        |
+| \texttt{eigs\_maxit}   | \texttt{300}        | \texttt{eigs} iteration limit       |
+| \texttt{eigs\_p}       | \texttt{20}         | \texttt{eigs} storage limit         |
+| \texttt{eigs\_tol}     | \texttt{1.4901e-08} | \texttt{eigs} convergence tolerance |
+| \texttt{expa}          | \texttt{0.5}        | EXPAND parameter                    |
+| \texttt{expb}          | \texttt{0.99}       | EXPAND parameter                    |
+| \texttt{expfrq}        | \texttt{10000}      | EXPAND reset frequency              |
+| \texttt{expsml}        | \texttt{1.0e-11}    | EXPAND small parameter              |
+| \texttt{facfrq}        | \texttt{50}         | Factorization frequency             |
+| \texttt{fevas}         | \texttt{100}        | Arcsearch function eval limit       |
+| \texttt{fevmax}        | \texttt{1000}       | Algorithm function eval limit       |
+| \texttt{ftol}          | \texttt{1.0e-04}    | Arcsearch descent parameter         |
+| \texttt{gtol}          | \texttt{0.9}        | Arcsearch curvature parameter       |
+| \texttt{infval}        | \texttt{1.0e+20}    | Infinity value                      |
+| \texttt{itermax}       | \texttt{1000}       | Algorithm iteration limit           |
+| \texttt{lin\_delta}    | \texttt{1.0e-04}    | Linear solve regularization         |
+| \texttt{lin\_maxit}    | \texttt{[]}         | Linear solve iteration limit        |
+| \texttt{lin\_tol}      | \texttt{1.0e-06}    | Linear solve relative tolerance     |
+| \texttt{print\_file}   | \texttt{0}          | Output file ID                      |
+| \texttt{print\_freq}   | \texttt{10}         | Output header frequency             |
+| \texttt{print\_level}  | \texttt{'iter'}     | Output level                        |
+| \texttt{print\_screen} | \texttt{1}          | Output to screen flag               |
+| \texttt{ptol}          | \texttt{1.0e-06}    | Primal tolerance                    |
+| \texttt{stpmax}        | \texttt{1.0e+10}    | Arcsearch max step                  |
+| \texttt{stpmin}        | \texttt{0}          | Arcsearch min step                  |
+| \texttt{xtol}          | \texttt{1.0e-08}    | Arcsearch interval tolerance        |
+|------------------------+---------------------+-------------------------------------|

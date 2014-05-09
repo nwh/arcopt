@@ -1,0 +1,69 @@
+\documentclass[11pt]{article}
+
+\input{/home/nwh/Dropbox/templates/nwh-style.sty}
+
+\title{Arcopt output summary}
+\author{Nick Henderson}
+%\date{}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+\maketitle
+
+\section{Example}
+
+\begin{verbatim}
+ iter fevcnt        f   ||z|| D     eval M s scnt    sres     stp bas bfac
+    1      2 -1.2e-01 1.8e-02   -1.3e+00 m 0   11 2.7e-10 2.7e-01  nb u
+    2      3 -1.4e-01 3.3e-01   -4.7e+00   0    9 6.6e-08 4.3e-02  nb u
+    3      4 -1.8e-01 2.7e-01   -2.3e+00   0    9 9.4e-12 9.4e-02  nb u
+    4      5 -2.4e-01 3.0e-01   -2.7e+00   0    8 9.1e-12 1.2e-01  nb u
+    5      6 -2.5e-01 3.6e-01   -3.5e+00   0    7 1.4e-11 9.4e-03  nb u
+    6      7 -3.1e-01 3.0e-01   -4.1e+00   0    6 1.3e-11 5.4e-02  nb u
+    7      8 -4.2e-01 6.7e-01   -2.0e+00   0    5 1.7e-11 1.2e-01  nb u
+    8      9 -4.5e-01 7.1e-01   -2.4e+00   0    4 2.2e-11 2.0e-02  nb u
+    9     10 -5.9e-01 6.9e-01   -1.8e+00   0    3 4.4e-12 2.3e-01  nb u
+   10     11 -9.4e-01 1.0e+00   -1.6e+00 m 0    2 1.3e-12 4.7e-01  nb u
+\end{verbatim}
+
+\section{Column definitions}
+
+\begin{description}
+\item[\code{iter}] Iteration
+\item[\code{fevcnt}] Function evaluation counter
+\item[\code{||z||}] Reduced gradient
+\item[\code{D}] Primal degeneracy flag.  A ``\code{d}'' appears in this column
+  if the current iterate is found to be degenerate.
+\item[\code{eval}] Minimum eigenvalue of reduced Hessian as reported by
+  Matlab's \code{eigs}.  The eigenvector corresponding to this eigenvalue is
+  used as a direction of negative curvature.
+\item[\code{M}] Modification or perturbation flag.  If ``\code{m}'' appears in
+  this column, then $|g_k\T H_k d_k| \le \tau |d_k\T H_k d_k|$ with $0 < \tau <
+  \frac{1}{3}$.  In this case the ``right hand side'' vector for the arc is set
+  to $g_k + d_k$.  This provides perturbation and allows the proof of
+  convergence to points satisfying the second order necessary optimality
+  conditions.  In the linearly constrained case the vectors refer to their reduced
+  counterparts.
+\item[\code{s}] Flag returned from iterative linear solver.  The code $0$
+  indicates success.
+\item[\code{scnt}] Number of matrix vector products used by linear solver
+\item[\code{sres}] Final residual from iterative linear solver
+\item[\code{stp}] Step size selected by arc search
+\item[\code{bas}] Basis change flags.  ``\code{s}'' indicates that a variable
+  has been made super-basic (a constraint has been deleted).  ``\code{n}''
+  indicates that a variable has become non-basic (a constraint has been
+  added).  ``\code{b}'' indicates a change to the basic set of variables.  Note
+  that there is an option in the code to prevent constraint deletions right
+  after additions.  This setting is off for these problems, because cycling
+  does not appear to be an issue.
+\item[\code{bfac}] Basis factorization flags.  ``\code{u}'' indicates rank-1
+  update.  ``\code{f}'' indicates refactorization of the basis.  ``\code{s}''
+  indicates BS repair.  ``\code{r}'' indicates BR repair.
+\end{description}
+
+% fix reference to bibtex file
+\bibliography{/home/nwh/Dropbox/ref/ref}{}
+\bibliographystyle{plain}
+
+\end{document}

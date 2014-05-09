@@ -1,0 +1,77 @@
+* A Matlab class for trust region arcs
+
+This class facilitates the construction and evaluation of trust region arcs.
+It also provides the ability to compute intersections with linear constraints.
+For more information, see the comments in the class file and test functions.
+
+Author: Nick Henderson <nwh@stanford.edu>
+
+* timeline
+
+- <2011-11-03 Thu> first version
+- <2011-12-21 Wed> added exp routines and test scripts
+
+* contents
+
+** main class file
+
+- trarc.m
+
+** expand procedures
+
+- trarc_expbnd.m: intersection with single linear constraint
+- trarc_expstp.m: intersection with constraint bounded above and below
+- trarc_exptst.m: intersection with system of linear constraints
+
+** example plot routines
+
+- trarc_plt_box.m: plot arc intersecting a box
+- trarc_plt_cir.m: plot arc intersecting circles
+
+** test drivers
+
+- trarc_run_all.m: run all test drivers
+- trarc_run_bnd.m: test intersection with trust region bound
+- trarc_run_int.m: test intersection with linear constraints
+- trarc_run.m: test evaluation of arc and derivatives
+- trarc_run_exp.m: run exp test drivers
+- trarc_run_expbnd.m: test driver for expbnd
+- trarc_run_expstp.m: test driver for expstp
+- trarc_run_exptst.m: test driver for exptst
+
+** test functions
+
+- trarc_tst_bnd.m: test function for intersection with trust region bound
+- trarc_tst_int.m: test function for intersection with linear constraints
+- trarc_tst.m: test function for arc and derivatives
+- trarc_tst_expbnd.m: test function for trarc_expbnd
+- trarc_tst_expstp.m: test function for trarc_expbnd
+- trarc_tst_exptst.m: test function for trarc_expbnd
+
+
+* example usage
+
+** construct an arc, evaluate at some points, and plot
+
+#+BEGIN_SRC matlab
+n = 2;
+H = randn(n,n); H = 0.5*(H+H');
+g = randn(n,1);
+arc = trarc(H,g);
+s = linspace(0,5,20);
+w = arc.sol_s(s);
+plot(w(1,:),w(2,:))
+#+END_SRC
+
+** run the test drivers
+
+#+BEGIN_SRC matlab
+trarc_run_all
+#+END_SRC
+
+** generate some plots
+
+#+BEGIN_SRC matlab
+trarc_plt_box
+trarc_plt_cir
+#+END_SRC
