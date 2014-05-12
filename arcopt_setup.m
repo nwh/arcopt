@@ -2,13 +2,12 @@
 
 function arcopt_setup
 
-load_mcute
-load_xunit
-load_arcopt
-
-home_dir = getenv('HOME');
-arcopt_dir = [home_dir '/Dropbox/code/arcopt'];
+arcopt_dir = pwd;
 addpath(arcopt_dir);
+addpath([arcopt_dir '/toolbox/mtasrch']);
+addpath([arcopt_dir '/toolbox/trarc']);
+addpath([arcopt_dir '/toolbox/lusol']);
+addpath([arcopt_dir '/toolbox/expand']);
 addpath([arcopt_dir '/test_set']);
 
 end
