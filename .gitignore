@@ -1,2 +1,8 @@
 # ignore mac meta data
 *.DS_Store
+
+# ignore temp files
+*~
+
+# ignore debug.org output
+debug.org

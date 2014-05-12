@@ -4,7 +4,7 @@ function arcopt_example1
   
   % seed the rng
   rng_seed = 10;
-  RandStream.setDefaultStream(RandStream('mt19937ar','seed',rng_seed));
+  rng(rng_seed);
 
   % choose problem size
   n = 50; % number of variables

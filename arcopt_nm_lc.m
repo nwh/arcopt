@@ -158,10 +158,10 @@ classdef arcopt_nm_lc < handle
       in_parse.addParamValue('facfrq',50,@(x) x>=0); % refactorization frequency
       in_parse.addParamValue('infval',1e20,@(x) x>0); % infinity value
       in_parse.addParamValue('cycle_guard',0,@(x) x==0 || x==1 || islogical(x)); % cycle guard
-      
+
       % crash procedure
       in_parse.addParamValue('crash','slack',@(x) ismember(x,{'slack','firstm'})); % selector for crash prodecure
-      
+
       % expand parameters
       in_parse.addParamValue('expfrq',10000,@(x) x>=0); % expand reset frequency
       in_parse.addParamValue('expa',.5,@(x) x>0 && x<1); % parameter for initial feasibility tolerance
@@ -281,16 +281,16 @@ classdef arcopt_nm_lc < handle
 
     function eigs_options(obj)
       %eigs_options  set options for eigs
-      
+
       obj.opt_eigs.issym = 1;
       obj.opt_eigs.isreal = 1;
       obj.opt_eigs.tol = obj.opt.eigs_tol;
       obj.opt_eigs.maxit = obj.opt.eigs_maxit;
       obj.opt_eigs.p = obj.opt.eigs_p;
       obj.opt_eigs.disp = obj.opt.eigs_disp;
-      
+
     end
-    
+
     %% print methods
     function mprint(obj,level,varargin)
       %mprint  print handler
@@ -757,8 +757,8 @@ classdef arcopt_nm_lc < handle
       %
 
       % (TODO) expose lusol options to user
-      obj.bfac_opt = lusol.luset();
-      obj.bfac = lusol(1,obj.bfac_opt);
+      obj.bfac_opt = lusol_obj.luset();
+      obj.bfac = lusol_obj(1,obj.bfac_opt);
 
     end
 
@@ -1869,7 +1869,7 @@ classdef arcopt_nm_lc < handle
       else
         obj.evalflg = false;
       end
-      
+
     end
 
     function phase2_price(obj)
@@ -1893,7 +1893,7 @@ classdef arcopt_nm_lc < handle
       if obj.evalflg
         return;
       end
-      
+
       % cycle_gaurd check
       if sum(obj.hs == 2) > 0 && ...
           max(abs(obj.z(obj.hs == 2))) >= obj.opt.dtol && ...
@@ -1901,7 +1901,7 @@ classdef arcopt_nm_lc < handle
           obj.stpbnd
         return;
       end
-      
+
       % standard price
       if sum(obj.hs == 2) == 0 || ...
           max(abs(obj.z(obj.hs == 2))) < obj.opt.dtol
@@ -2418,7 +2418,7 @@ classdef arcopt_nm_lc < handle
         % save old values
         obj.x_old = obj.x;
         obj.f_old = obj.f;
-        
+
         % expand
         obj.exp_main();
 
@@ -2540,10 +2540,10 @@ classdef arcopt_nm_lc < handle
 
       % item: iter ||z|| D   eval  M   s   prd sres  stp   bas bfac fev df    dx    ns
       % head: iter ||z|| D   eval  M   s   prd sres  stp   bas bfac fev df    dx    ns
-      % hspc: %4s  %5s   %1s %6s   %1s %1s %3s %5s   %5s   %3s %4s  %3s %6s   %5s   %s 
+      % hspc: %4s  %5s   %1s %6s   %1s %1s %3s %5s   %5s   %3s %4s  %3s %6s   %5s   %s
       % dspc: %4d  %5.0e %1s %6.0e %1s %1d %3d %5.0e %5.0e %3s %4s  %3d %6.0e %5.0e %d
 
-      
+
       if obj.prntcnt == 1
         % print header
         obj.mprint('iter','\n');
@@ -2651,21 +2651,21 @@ classdef arcopt_nm_lc < handle
       end
 
     end
-    
+
     function dbg_basis_check(obj)
       %dbg_basic_check  basis consistency check
-      
+
       ptol = obj.opt.ptol;
-      
+
       fprintf('number of variables, n = %d\n',obj.n);
       fprintf('number of constraints, m = %d\n',obj.m);
-      
+
       for i = [-1 0 1 2 3 4]
         fprintf('sum(hs == %d) = %d\n',i,sum(obj.hs==i));
       end
-      
+
       check = true(obj.n+obj.m,1);
-      
+
       for i = 1:(obj.n + obj.m)
         switch obj.hs(i)
           case -1 % nonbasic between bl and bu
@@ -2697,17 +2697,17 @@ classdef arcopt_nm_lc < handle
             fprintf('unknown basis indicator\n');
         end
       end
-      
+
       incon = ~check;
       incon_idx = find(incon);
-      
+
       fprintf('number of inconsistent variables = %d\n',sum(incon));
       fprintf('inconsisten variables: ');
       for i = 1:length(incon_idx)
         fprintf('%d ',incon_idx(i));
       end
       fprintf('\n');
-      
+
     end
 
   end
