@@ -11,23 +11,28 @@
 %
 function arcopt_setup(install)
 
+% check for lusol intall
+if isempty(which('load_lusol'))
+  error('arcopt_setup requires load_lusol to be available on the Matlab path.')
+end
+
 if nargin == 1 && strcmp(install,'install')
   % get userpath directory
   mypath = strsplit(userpath,':');
   mypath = mypath{1};
   % create directory if it does not exist
   % TODO: make this better
-  [~,~,~] = mkdir(mypath)
+  [~,~,~] = mkdir(mypath);
   % get arcopt dir
   arcopt_dir = pwd;
   % open file
   fid = fopen([mypath '/load_arcopt.m'],'w');
   % write file
   fprintf(fid,'function load_arcopt\n');
+  fprintf(fid,'  load_lusol\n');
   fprintf(fid,'  addpath(''%s'')\n',arcopt_dir);
   fprintf(fid,'  addpath(''%s'')\n',[arcopt_dir '/toolbox/mtasrch']);
   fprintf(fid,'  addpath(''%s'')\n',[arcopt_dir '/toolbox/trarc']);
-  fprintf(fid,'  addpath(''%s'')\n',[arcopt_dir '/toolbox/lusol/matlab']);
   fprintf(fid,'  addpath(''%s'')\n',[arcopt_dir '/toolbox/expand']);
   fprintf(fid,'  addpath(''%s'')\n',[arcopt_dir '/test_set']);
   fprintf(fid,'end\n');
@@ -35,11 +40,11 @@ if nargin == 1 && strcmp(install,'install')
   fclose(fid);
   %keyboard
 else
+  load_lusol;
   arcopt_dir = pwd;
   addpath(arcopt_dir);
   addpath([arcopt_dir '/toolbox/mtasrch']);
   addpath([arcopt_dir '/toolbox/trarc']);
-  addpath([arcopt_dir '/toolbox/lusol/matlab']);
   addpath([arcopt_dir '/toolbox/expand']);
   addpath([arcopt_dir '/test_set']);
 end
