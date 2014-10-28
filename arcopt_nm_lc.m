@@ -1685,7 +1685,7 @@ classdef arcopt_nm_lc < handle
       %
       % On entry:
       %   usrhess = user specified Hessian function
-      % 
+      %
       % Required if nargin(usrhess) == 1:
       %   H = Hessian evaluated at x(1:n)
       %
@@ -1709,9 +1709,9 @@ classdef arcopt_nm_lc < handle
       else
         error('arcopt_nm_lc:mulH','usrhess has incorrect number of inputs.')
       end
-      
+
     end
-    
+
     function Y = mulZt(obj,X)
       %mulZt  Y = Z'*X
       %
