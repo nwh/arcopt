@@ -1676,6 +1676,42 @@ classdef arcopt_nm_lc < handle
     end
 
     %% multiply methods
+    function Y = mulH(obj,X)
+      %mulH  compute matrix-product with Hessian: Y = H*X
+      %
+      % This method computes the matrix vector product with the Hessian.
+      % It allows for products when H is a sparse matrix or when H is an
+      % operator.
+      %
+      % On entry:
+      %   usrhess = user specified Hessian function
+      % 
+      % Required if nargin(usrhess) == 1:
+      %   H = Hessian evaluated at x(1:n)
+      %
+      % Required if nargin(usrhess) == 2:
+      %   n = number of variables
+      %   x = current iterate
+      %
+      % Input:
+      %   X = input matrix, n rows and arbitrary number of colums
+      %
+      % Output:
+      %   Y = output matrix, same size as X
+      %
+
+      if nargin(obj.usrhess) == 1
+        % hessian is a sparse matrix
+        Y = obj.H*X;
+      elseif nargin(obj.usrhess) == 2
+        % hessian is an operator
+        Y = obj.usrhess(obj.x(1:obj.n),X);
+      else
+        error('arcopt_nm_lc:mulH','usrhess has incorrect number of inputs.')
+      end
+      
+    end
+    
     function Y = mulZt(obj,X)
       %mulZt  Y = Z'*X
       %
@@ -1739,7 +1775,7 @@ classdef arcopt_nm_lc < handle
       %
 
       Y1 = obj.mulZ(X);
-      Y1(1:obj.n,:) = obj.H*Y1(1:obj.n,:);
+      Y1(1:obj.n,:) = obj.mulH(Y1(1:obj.n,:));
       Y1(obj.n+1:end,:) = 0;
       Y = obj.mulZt(Y1);
 
@@ -1791,6 +1827,8 @@ classdef arcopt_nm_lc < handle
       % as a n by n sparse matrix.  Thus it is not possible to take products
       % with a n+m vector (containing slacks).
       %
+      % Only evaluates Hessian if usrhess takes one input argument.
+      %
       % On entry:
       %   n = number of true variables
       %   x = current iterate
@@ -1799,7 +1837,9 @@ classdef arcopt_nm_lc < handle
       %   H = sparse Hessian at x with size n by n
       %
 
-      obj.H = obj.usrhess(obj.x(1:obj.n));
+      if nargin(obj.usrhess) == 1
+        obj.H = obj.usrhess(obj.x(1:obj.n));
+      end
     end
 
     function comp_eigs(obj)
@@ -2294,7 +2334,7 @@ classdef arcopt_nm_lc < handle
       d2s0 = obj.arc_ZQ*obj.arc.sol_s(0,2);
 
       % compute initial value for second derivative of search function
-      obj.srch_d2val = obj.g'*d2s0 + ds0(1:obj.n)'*(obj.H*ds0(1:obj.n));
+      obj.srch_d2val = obj.g'*d2s0 + ds0(1:obj.n)'*(obj.mulH(ds0(1:obj.n)));
 
     end
 
